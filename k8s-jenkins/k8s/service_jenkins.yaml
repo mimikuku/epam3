@@ -44,4 +44,3 @@
         targetPort: 50000
         name: slaves
 # [END jenkins_service_discovery]
-  

@@ -4,7 +4,5 @@ metadata:
   name: jenkins-creds
   namespace: jenkins
 data:
-  username: bXktYXBw
-  password: Mzk1MjgkdmRnN0pi
   options: LS1hcmd1bWVudHNSZWFsbS5wYXNzd2QuamVua2lucz1DSEFOR0VfTUUgLS1hcmd1bWVudHNSZWFsbS5yb2xlcy5qZW5raW5zPWFkbWluCg==
   
