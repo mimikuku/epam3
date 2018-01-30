@@ -52,6 +52,8 @@ local.properties
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm
 
 /*.iml
+/message-gateway/*.iml
+/message-processor/*.iml
 
 ## Directory-based project format:
 .idea/
