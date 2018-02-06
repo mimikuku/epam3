@@ -12,7 +12,8 @@ node(){
     stage('get source') {
 	
 	dir(project) {
-        	git branch: 'rkudryashov', credentialsId: '243eef37-2cc2-4340-9b63-2e9b8d13182e', url: 'git@gitlab.com:nikolyabb/epam-devops-3rd-stream.git'	
+        	git branch: 'rkudryashov', credentialsId: '243eef37-2cc2-4340-9b63-2e9b8d13182e', url: 'git@gitlab.com:nikolyabb/epam-devops-3rd-stream.git'
+		}	
     }
     stage('run tests') {
 
