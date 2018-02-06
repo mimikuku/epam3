@@ -6,7 +6,7 @@ node(){
     stage('test'){
         sh "export"
         dir(workdir) {
-            deletetDir()
+            deleteDir()
         }
     }
     stage('get source') {
