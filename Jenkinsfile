@@ -17,13 +17,18 @@ node(){
 	}	
     stage('run tests') {
 	dir(workdir) {
-		withTool('Maven 3.2.2'){
+		withMaven(maven: maven){
 		   sh 'mvn clean test'
 	    }
 	}
 
     }
     stage('build package') {
+	 dir(workdir) {
+                withMaven(maven: maven){
+                   sh 'mvn -X clean package -Dmaven.test.skip=true'
+            }
+        }
 
     }
     stage('save artifact') {
