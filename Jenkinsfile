@@ -16,6 +16,11 @@ node(){
                 }
 	}	
     stage('run tests') {
+	dir(workdir) {
+		withTool('Maven 3.2.2'){
+		   sh 'mvn clean test'
+	    }
+	}
 
     }
     stage('build package') {
