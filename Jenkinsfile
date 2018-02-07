@@ -29,7 +29,10 @@ node(){
                    sh 'mvn -X clean package -Dmaven.test.skip=true'
        }
 		docker.withTool('docker'){
-	    	   sh 'docker ps -a'
+	    	   withDockerServer([uri: 'unix:///var/run/docker.sock']) {
+			sh 'docker ps -a'
+			}
+
 		}
 
           }
