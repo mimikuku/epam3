@@ -28,7 +28,7 @@ node(){
                 withMaven(maven: 'maven'){
                    sh 'mvn -X clean package -Dmaven.test.skip=true'
        }
-		withDockerServer([uri: 'unix:///var/run/docker.sock']) {
+		withDocker(docker: 'docker'){
 	    	   sh 'docker ps -a'
 		}
 
