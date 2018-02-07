@@ -27,16 +27,15 @@ node(){
 	 dir(workdir) {
                 withMaven(maven: 'maven'){
                    sh 'mvn -X clean package -Dmaven.test.skip=true'
-            }
-	withDocker(docker: 'docker'){
+       }
 		withDockerServer([uri: 'unix:///var/run/docker.sock']) {
-	    		sh docker ps -a
+	    	   sh docker ps -a
 		}
 
           }
 
       }
-   }
+   
     stage('save artifact') {
 
     }
