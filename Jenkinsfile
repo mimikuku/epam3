@@ -28,7 +28,7 @@ node(){
                 withMaven(maven: 'maven'){
                    sh 'mvn -X clean package -Dmaven.test.skip=true'
        }
-		withDocker(docker: 'docker'){
+		docker.withTool('docker'){
 	    	   sh 'docker ps -a'
 		}
 
