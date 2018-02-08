@@ -30,7 +30,7 @@ node(){
        }
 		docker.withTool('docker'){
 	    	   withDockerServer([uri: 'unix:///var/run/docker.sock']) {
-			sh 'docker ps -a'
+			sh 'sudo docker ps -a'
 			}
 
 		}
