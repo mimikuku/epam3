@@ -28,6 +28,7 @@ node(){
                 withMaven(maven: 'maven'){
                    sh 'mvn -X clean package -Dmaven.test.skip=true'
        }
+		sh 'find . -type f -regex ".*\.\(jar\|war\)"'
 		docker.withTool('docker'){
 	    	   withDockerServer([uri: 'unix:///var/run/docker.sock']) {
 			sh 'docker ps -a'
