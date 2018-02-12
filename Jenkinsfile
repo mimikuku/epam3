@@ -2,7 +2,7 @@
 
 def workdir = "dir1"
 def art = "art"
-def proc = "message-processor"
+def proc = "docker_image_proc"
 node(){
     stage('test'){
         sh "export"
@@ -41,9 +41,11 @@ node(){
    
     stage('save artifact') {
 	 dir (workdir){
-	    sh 'find ./$proc/ ! -regex "\\(.*etc/*.*\\|.*\\.jar\\)" -delete'
+	    //sh 'find ./message-processor/ ! -regex "\\(.*etc/*.*\\|.*\\.jar\\)" -delete'
 	    dir (proc){
-		sh 'echo $\'FROM java:8\\n\\n\\nCOPY    . /workdir/\\nWORKDIR /workdir/\\nENTRYPOINT ["java"]\\nCMD ["-jar","message-processor-1.0-SNAPSHOT.jar","etc/config.properties"]\' > Dockerfile'
+		sh 'cp $(find $JENKINS_HOME/workspace/$JOB_NAME/dir1/message-processor/ -name "message-processor-1.0-SNAPSHOT.jar") .'
+		sh 'cp $(find $JENKINS_HOME/workspace/$JOB_NAME/dir1/message-processor/ -name "config.properties") .' 	
+		sh 'echo $\'FROM java:8\\n\\n\\nCOPY . /workdir/\\nWORKDIR /workdir/\\nENTRYPOINT ["java"]\\nCMD ["-jar","message-processor-1.0-SNAPSHOT.jar","config.properties"]\' > Dockerfile'
 		}	
 
           }
