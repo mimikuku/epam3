@@ -72,6 +72,7 @@ node(){
     		}	
 	
 	}
+      }
     }
     stage('deploy to env') {
 
