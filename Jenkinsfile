@@ -42,10 +42,11 @@ node(){
     stage('save artifact') {
 	 dir (workdir){
 	    sh 'find ./$proc/ ! -regex "\\(.*etc/*.*\\|.*\\.jar\\)" -delete'
-	    dir (proc{
-		sh 'echo $\'FROM java:8\\n\\n\\nCOPY    . /workdir/\\nWORKDIR /workdir/\\nENTRYPOINT ["java"]\\nCMD ["-jar","message-processor-1.0-SNAPSHOT.jar","etc/co		    nfig.properties"]\' > Dockerfile'
+	    dir (proc){
+		sh 'echo $\'FROM java:8\\n\\n\\nCOPY    . /workdir/\\nWORKDIR /workdir/\\nENTRYPOINT ["java"]\\nCMD ["-jar","message-processor-1.0-SNAPSHOT.jar","etc/config.properties"]\' > Dockerfile'
 		}	
 
+          }
     }
     stage('deploy to env') {
 
