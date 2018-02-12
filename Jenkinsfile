@@ -47,10 +47,12 @@ node(){
 		sh 'cp $(find $JENKINS_HOME/workspace/$JOB_NAME/dir1/message-processor/ -name "config.properties") .' 	
 		sh 'echo \'FROM java:8\\n\\n\\nCOPY . /workdir/\\nWORKDIR /workdir/\\nENTRYPOINT ["java"]\\nCMD ["-jar","message-processor-1.0-SNAPSHOT.jar","config.properties"]\' > Dockerfile'
 		docker.withTool('docker'){
-                   withDockerServer([uri: 'unix:///var/run/docker.sock']) {
-                        sh 'docker build -t messege-processor:$BUILD_NUMBER .'
-			sh 'docker tag messege-processor:$BUILD_NUMBER rkudryashov/messege-processor:$BUILD_NUMBER'
-			sh 'docker push rkudryashov/messege-processor:$BUILD_NUMBER'
+			withDockerRegistry([credentialsId: 'f9b46bc9-8260-4db8-821c-b9fa96fdb4f2', url: 'https://index.docker.io/v1/']) {
+                   		withDockerServer([uri: 'unix:///var/run/docker.sock']) {
+                        		sh 'docker build -t messege-processor:$BUILD_NUMBER .'
+					sh 'docker tag messege-processor:$BUILD_NUMBER rkudryashov/messege-processor:$BUILD_NUMBER'
+					sh 'docker push rkudryashov/messege-processor:$BUILD_NUMBER'
+				}
 			}	
 		   }
 		}	
