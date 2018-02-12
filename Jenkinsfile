@@ -51,7 +51,8 @@ node(){
                         sh 'docker build -t messege-processor:$BUILD_NUMBER'
 			sh 'docker tag messege-processor:$BUILD_NUMBER rkudryashov/messege-processor:$BUILD_NUMBER'
 			sh 'docker push rkudryashov/messege-processor:$BUILD_NUMBER'
-			}
+			}	
+		   }
 		}	
 
           }
