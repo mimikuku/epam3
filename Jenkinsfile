@@ -9,13 +9,13 @@ node(){
         sh "export"
         dir(workdir) {
             deleteDir()
-        }
-    }
+	}
+	}
     stage('get source') {
 	dir(workdir) {
 		git branch: 'rkudryashov', credentialsId: '650ea460-204d-4861-963b-af80d47367b0', url: 'git@gitlab.com:nikolyabb/epam-devops-3rd-stream.git'
 		sh 'ls -lah'
-                }
+	 }
 	}	
     stage('run tests') {
 	dir(workdir) {
@@ -35,11 +35,10 @@ node(){
 		docker.withTool('docker'){
 	    	   withDockerServer([uri: 'unix:///var/run/docker.sock']) {
 			sh 'docker ps -a'
-			}
-		   }
-		}
-    }
-   
+	   }
+	  }
+	 }
+	}
     stage('save artifact') {
 	 dir (workdir){
 	    //sh 'find ./message-processor/ ! -regex "\\(.*etc/*.*\\|.*\\.jar\\)" -delete'
@@ -53,10 +52,10 @@ node(){
                         		sh 'docker build -t messege-processor:$BUILD_NUMBER .'
 					sh 'docker tag messege-processor:$BUILD_NUMBER rkudryashov/messege-processor:$BUILD_NUMBER'
 					sh 'docker push rkudryashov/messege-processor:$BUILD_NUMBER'
-				}
-			}	
-		   }
-		}
+	   }
+	  }	
+	 }
+	}
 	     dir (gateway){
                 sh 'cp -R $JENKINS_HOME/workspace/$JOB_NAME/dir1/message-gateway/* .'
                 sh 'echo \'FROM maven\\n\\n\\nCOPY . /workdir/\\nWORKDIR /workdir/\\nENTRYPOINT ["mvn"]\\nCMD ["tomcat7:run"]\' > Dockerfile'
@@ -66,14 +65,12 @@ node(){
                                         sh 'docker build -t messege-gateway:$BUILD_NUMBER .'
                                         sh 'docker tag messege-gateway:$BUILD_NUMBER rkudryashov/messege-gateway:$BUILD_NUMBER'
                                         sh 'docker push rkudryashov/messege-gateway:$BUILD_NUMBER'
-
-				}
-          		}		
-    		}	
-	
+	     }
+	    }		
+	   }	
+	  }
+	 }
 	}
-      }
-    }
     stage('deploy to env') {
 	 docker.withTool('docker'){
                  withDockerServer([uri: 'unix:///var/run/docker.sock']) {
@@ -81,9 +78,9 @@ node(){
                    sh 'docker run -d --name rabbitmq --net=container:message-gateway rabbitmq'
                    sh 'docker run -d --name messege-processor --net=container:rabbitmq rkudryashov/messege-processor:$BUILD_NUMBER'
 		   sh 'docker start messege-processor'
-                   }
-                  }
-    }
+	  }
+	 }
+	}
     stage('provision env') {
 
     }
