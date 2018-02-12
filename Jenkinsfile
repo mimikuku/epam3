@@ -75,7 +75,13 @@ node(){
       }
     }
     stage('deploy to env') {
-
+	 docker.withTool('docker'){
+                 withDockerServer([uri: 'unix:///var/run/docker.sock']) {
+                   sh 'docker run -d --name message-gateway -p 8888:8080 rkudryashov/messege-gateway:$BUILD_NUMBER'
+                   sh 'docker run -d --name rabbitmq --net=container:message-gateway rabbitmq'
+                   sh 'docker run -d --name messege-processor --net=container:rabbitmq rkudryashov/messege-processor:$BUILD_NUMBER'
+                   }
+                  }
     }
     stage('provision env') {
 
