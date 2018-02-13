@@ -116,7 +116,6 @@ node(){
 
     }
 
-    }
     stage('integration test') {
 	echo 'Stage test'
     }
