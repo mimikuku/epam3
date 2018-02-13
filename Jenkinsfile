@@ -1,5 +1,6 @@
 
 
+import groovy.json.JsonSlurper
 def workdir = "dir1"
 def art = "art"
 def proc = "docker_image_proc"
@@ -76,18 +77,50 @@ node(){
                  withDockerServer([uri: 'unix:///var/run/docker.sock']) {
                    sh 'docker run -d --name message-gateway -p 8888:8080 rkudryashov/messege-gateway:$BUILD_NUMBER'
                    sh 'docker run -d --name rabbitmq --net=container:message-gateway rabbitmq'
-		   sleep 10
-                   sh 'docker run -d --name messege-processor --net=container:rabbitmq rkudryashov/messege-processor:$BUILD_NUMBER'
+		   sleep 20
+                   sh 'docker run --name messege-processor --net=container:rabbitmq rkudryashov/messege-processor:$BUILD_NUMBER'
 	  }
 	 }
 	}
     stage('provision env') {
+	echo 'Going to create bin'
+        def createBody = """
+	{
+  "status": 200,
+  "statusText": "OK",
+  "httpVersion": "HTTP/1.1",
+  "headers": [],
+  "cookies": [],
+  "content": {
+    "mimeType": "text/plain",
+    "text": ""
+  	     }
+	}
+        """
+        def response = httpRequest(
+                httpMode: 'POST',
+                url: 'http://mockbin.org/bin/create',
+                validResponseCodes: '100:299',
+                requestBody: createBody.toString()
+        )
+        println "-----------------------"
+        println response.content.toString()
+
+        println "-----------------------"
+        def jsonSlrpBody = new JsonSlurper().parseText(response.content)
+        println jsonSlrpBody.toString()
+
+        println "-----------------------"
+        def jsonSlrpHeaders = response.headers
+        println jsonSlrpHeaders
+
+    }
 
     }
     stage('integration test') {
-
+	echo 'Stage test'
     }
     stage('send report') {
-
+	echo 'Stage report'
     }
 }
