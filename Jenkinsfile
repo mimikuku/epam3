@@ -77,8 +77,9 @@ node(){
                  withDockerServer([uri: 'unix:///var/run/docker.sock']) {
                    sh 'docker run -d --name message-gateway -p 8888:8080 rkudryashov/messege-gateway:$BUILD_NUMBER'
                    sh 'docker run -d --name rabbitmq --net=container:message-gateway rabbitmq'
-		   sleep 20
-                   sh 'docker run --name messege-processor --net=container:rabbitmq rkudryashov/messege-processor:$BUILD_NUMBER'
+                   sh 'docker run -d --name messege-processor --net=container:rabbitmq rkudryashov/messege-processor:$BUILD_NUMBER'
+		   sleep 30
+		   sh 'docker start messege-processor'
 	  }
 	 }
 	}
