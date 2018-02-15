@@ -31,7 +31,7 @@ node(){
                 sh 'mvn package -Dmaven.test.skip=true'
             }
             docker.withTool('docker') {
-                withDockerServer([uri: tcp://127.0.0.1:2376]) {
+                withDockerServer([uri: 'unix:///var/run/docker.sock']]) {
                     sh 'docker ps'
                 }
             }
