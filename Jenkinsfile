@@ -7,37 +7,42 @@ def workdir = "dir1"
 def art = "artifactory"
 def proc = "message_processor_$BUILD_NUMBER"
 def gateway = "message_gateway_$BUILD_NUMBER"
-node(){
-       stage('Create bin'){
-       echo 'Going to create bin'
-       def rbin = httpRequest(
-               consoleLogResponseBody: true,
-               httpMode: 'POST',
-               url: "${binHost}/api/v1/bins"
-               )
-        def json = new JsonSlurper().parseText(rbin.getContent())
-        binNumber = json.name.toString()
-        println binNumber
-	}
-	stage('prepere') {
+def dockerSocket = 'unix:///var/run/docker.sock'
+def dockerHub = '\'f9b46bc9-8260-4db8-821c-b9fa96fdb4f2\', url: \'https://index.docker.io/v1/\''
+node() {
+
+	stage('preparation') {
+		echo 'Going to create bin'
+		def rbin = httpRequest(
+				consoleLogResponseBody: true,
+				httpMode: 'POST',
+				url: "${binHost}/api/v1/bins"
+		)
+		def json = new JsonSlurper().parseText(rbin.getContent())
+		binNumber = json.name.toString()
+		println binNumber
+		echo 'testing working capacity of docker and check containers of old-builds'
 		docker.withTool('docker') {
-			withDockerServer([uri: 'unix:///var/run/docker.sock']) {
+			withDockerServer([uri: dockerSocket]) {
+				sh 'docker ps -a'
 				try {
 					sh 'docker stop message-processor rabbitmq message-gateway'
 					sh 'docker rm message-processor rabbitmq message-gateway'
-				}catch (err) {
+				} catch (err) {
 					echo 'Containers not created'
 				}
 			}
 		}
 	}
-    stage('get source') {
-	dir(workdir) {
-		git branch: 'rkudryashov', credentialsId: '650ea460-204d-4861-963b-af80d47367b0', url: 'git@gitlab.com:nikolyabb/epam-devops-3rd-stream.git'
+	stage('get source') {
+		dir(workdir) {
+			echo 'Geting source from git repository'
+			git branch: 'rkudryashov', credentialsId: '650ea460-204d-4861-963b-af80d47367b0', url: 'git@gitlab.com:nikolyabb/epam-devops-3rd-stream.git'
 
-	 }
-	}	
-    stage('run tests') {
+		}
+	}
+	stage('run tests') {
+		echo 'Runing maven tests and output in file'
 	dir(workdir) {
 		withMaven(maven: 'maven'){
 		   sh 'mvn clean test > maven.tests-$BUILD_NUMBER.txt'
@@ -45,20 +50,15 @@ node(){
 	}
     }
     stage('build package') {
+		echo 'Building package'
 	 dir(workdir) {
                 withMaven(maven: 'maven'){
                    sh 'mvn -X clean package -Dmaven.test.skip=true'
-        	}
-		//sh 'find . -type f -regex ".*\\.\\(jar\\|war\\)"'
-			
-		docker.withTool('docker'){
-	    	   withDockerServer([uri: 'unix:///var/run/docker.sock']) {
-			sh 'docker ps -a'
-	   }
-	  }
-	 }
-	}
+				}
+	 		}
+	 	}
     stage('save artifact') {
+		echo 'saving artifacts and building docker images'
 	 dir (workdir){
 	    dir (art){
 			sh 'cp $(find $JENKINS_HOME/workspace/$JOB_NAME/dir1 -name "maven.tests-$BUILD_NUMBER.txt") .'
@@ -67,8 +67,8 @@ node(){
 			 sh 'cp $(find $JENKINS_HOME/workspace/$JOB_NAME/dir1/message-processor/ -name "config.properties") .'
 			 sh 'echo \'FROM java:8\\n\\n\\nCOPY . /workdir/\\nWORKDIR /workdir/\\nENTRYPOINT ["java"]\\nCMD ["-jar","message-processor-1.0-SNAPSHOT.jar","config.properties"]\' > Dockerfile'
 			 docker.withTool('docker') {
-				 withDockerRegistry([credentialsId: 'f9b46bc9-8260-4db8-821c-b9fa96fdb4f2', url: 'https://index.docker.io/v1/']) {
-					 withDockerServer([uri: 'unix:///var/run/docker.sock']) {
+				 withDockerRegistry([credentialsId: dockerHub]) {
+					 withDockerServer([uri: dockerSocket]) {
 						 sh 'docker build -t messege-processor:$BUILD_NUMBER .'
 						 sh 'docker tag messege-processor:$BUILD_NUMBER rkudryashov/messege-processor:$BUILD_NUMBER'
 						 sh 'docker push rkudryashov/messege-processor:$BUILD_NUMBER'
@@ -81,8 +81,8 @@ node(){
                 sh 'cp -R $JENKINS_HOME/workspace/$JOB_NAME/dir1/message-gateway/* .'
                 sh 'echo \'FROM maven\\n\\n\\nCOPY . /workdir/\\nWORKDIR /workdir/\\nENTRYPOINT ["mvn"]\\nCMD ["tomcat7:run"]\' > Dockerfile'
 				docker.withTool('docker'){
-                        withDockerRegistry([credentialsId: 'f9b46bc9-8260-4db8-821c-b9fa96fdb4f2', url: 'https://index.docker.io/v1/']) {
-                                withDockerServer([uri: 'unix:///var/run/docker.sock']) {
+                        withDockerRegistry([credentialsId: dockerHub]) {
+                                withDockerServer([uri: dockerSocket]) {
                                         sh 'docker build -t messege-gateway:$BUILD_NUMBER .'
                                         sh 'docker tag messege-gateway:$BUILD_NUMBER rkudryashov/messege-gateway:$BUILD_NUMBER'
                                         sh 'docker push rkudryashov/messege-gateway:$BUILD_NUMBER'
@@ -94,8 +94,9 @@ node(){
 	  }
 	}
     stage('deploy to env') {
+		echo 'deploing docker images'
 	 docker.withTool('docker'){
-                 withDockerServer([uri: 'unix:///var/run/docker.sock']) {
+                 withDockerServer([uri: dockerSocket]) {
                    sh 'docker run -d --name message-gateway -p 8888:8080 rkudryashov/messege-gateway:$BUILD_NUMBER'
                    sh 'docker run -d --name rabbitmq --net=container:message-gateway rabbitmq'
                    sh 'docker run -d --name message-processor --net=container:rabbitmq rkudryashov/messege-processor:$BUILD_NUMBER'
@@ -104,24 +105,62 @@ node(){
 	  }
 	 }
 	}
-    stage('provision env') {
-
-    }
-    stage('print bin info'){
-        echo 'Print bin info'
-
-    }
-
-    stage('Send test message'){
-        echo 'Going to send message'
-        println "${binHost}/${binNumber}?inspect"
-    }
-    }
 
     stage('integration test') {
-	echo 'Stage test'
-    }
+		def testMessage1 = 'docker exec message-gateway curl http://localhost:8080/message -X POST -d \'{"messageId":1, "timestamp":1234, "protocolVersion":"1.0.0", "messageData":{"mMX":1234, "mPermGen":1234}}\''
+		def procAnswer1 = 'docker logs --tail 1 message-processor'
+		def testMessage2 = 'docker exec message-gateway curl http://localhost:8080/message -X POST -d \'{"messageId":2, "timestamp":2234, "protocolVersion":"1.0.1", "messageData":{"mMX":1234, "mPermGen":5678, "mOldGen":22222}}\''
+		def procAnswer2 = 'docker logs --tail 1 message-processor'
+		def testMessage3 = 'docker exec message-gateway curl http://localhost:8080/message -X POST -d \'{"messageId":3, "timestamp":3234, "protocolVersion":"2.0.0", "payload":{"mMX":1234, "mPermGen":5678, "mOldGen":22222, "mYoungGen":333333}}\''
+		def procAnswer3 = 'docker logs --tail 1 message-processor'
+		echo 'sending test messages and pushing it in backet'
+		docker.withTool('docker'){
+			withDockerServer([uri: dockerSocket]) {
+				try {
+				sh testMessage1
+					def report1 = sh procAnswer1
+				}catch (err){
+					def
+							report1 = 'Something wrong'
+				}
+				httpRequest(
+						consoleLogResponseBody: true,
+						httpMode: 'POST',
+						url: "${binHost}/${binNumber}",
+						requestBody: 'Test message is' + report1.toString()
+				)
+				try {
+					sh testMessage2
+						def	report2 = sh procAnswer2
+				}catch (err){
+					def
+							report2 = 'Something wrong'
+				}
+				httpRequest(
+						consoleLogResponseBody: true,
+						httpMode: 'POST',
+						url: "${binHost}/${binNumber}",
+						requestBody: 'Test message is:' + report2.toString()
+				)
+				try {
+					sh testMessage3
+						def report3 = sh procAnswer3
+				}catch (err){
+					def
+							report3 = 'Something wrong'
+				}
+				httpRequest(
+						consoleLogResponseBody: true,
+						httpMode: 'POST',
+						url: "${binHost}/${binNumber}",
+						requestBody: 'Test message is' + report3.toString()
+				)
+				}
+			}
+	}
     stage('send report') {
-	echo 'Stage report'
+	echo 'to check report use url'
+		println "${binHost}/${binNumber}?inspect"
     }
+}
 }
