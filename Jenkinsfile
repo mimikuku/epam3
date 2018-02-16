@@ -7,8 +7,6 @@ def workdir = "dir1"
 def art = "artifactory"
 def proc = "message_processor_$BUILD_NUMBER"
 def gateway = "message_gateway_$BUILD_NUMBER"
-def dockerSocket = 'unix:///var/run/docker.sock'
-def dockerHub = '\'f9b46bc9-8260-4db8-821c-b9fa96fdb4f2\', url: \'https://index.docker.io/v1/\''
 node() {
 
 	stage('preparation') {
@@ -23,7 +21,7 @@ node() {
 		println binNumber
 		echo 'testing working capacity of docker and check containers of old-builds'
 		docker.withTool('docker') {
-			withDockerServer([uri: ${dockerSocket}]) {
+			withDockerServer([uri: 'unix://var/run/docker.sock']) {
 				sh 'docker ps -a'
 				try {
 					sh 'docker stop message-processor rabbitmq message-gateway'
@@ -67,8 +65,8 @@ node() {
 			 sh 'cp $(find $JENKINS_HOME/workspace/$JOB_NAME/dir1/message-processor/ -name "config.properties") .'
 			 sh 'echo \'FROM java:8\\n\\n\\nCOPY . /workdir/\\nWORKDIR /workdir/\\nENTRYPOINT ["java"]\\nCMD ["-jar","message-processor-1.0-SNAPSHOT.jar","config.properties"]\' > Dockerfile'
 			 docker.withTool('docker') {
-				 withDockerRegistry([credentialsId: dockerHub]) {
-					 withDockerServer([uri: dockerSocket]) {
+				 withDockerRegistry([credentialsId: 'f9b46bc9-8260-4db8-821c-b9fa96fdb4f2', url: 'https://index.docker.io/v1/']) {
+					 withDockerServer([uri: 'unix://var/run/docker.sock']) {
 						 sh 'docker build -t messege-processor:$BUILD_NUMBER .'
 						 sh 'docker tag messege-processor:$BUILD_NUMBER rkudryashov/messege-processor:$BUILD_NUMBER'
 						 sh 'docker push rkudryashov/messege-processor:$BUILD_NUMBER'
@@ -81,8 +79,8 @@ node() {
                 sh 'cp -R $JENKINS_HOME/workspace/$JOB_NAME/dir1/message-gateway/* .'
                 sh 'echo \'FROM maven\\n\\n\\nCOPY . /workdir/\\nWORKDIR /workdir/\\nENTRYPOINT ["mvn"]\\nCMD ["tomcat7:run"]\' > Dockerfile'
 				docker.withTool('docker'){
-                        withDockerRegistry([credentialsId: dockerHub]) {
-                                withDockerServer([uri: dockerSocket]) {
+                        withDockerRegistry([credentialsId: 'f9b46bc9-8260-4db8-821c-b9fa96fdb4f2', url: 'https://index.docker.io/v1/']) {
+                                withDockerServer([uri: 'unix://var/run/docker.sock']) {
                                         sh 'docker build -t messege-gateway:$BUILD_NUMBER .'
                                         sh 'docker tag messege-gateway:$BUILD_NUMBER rkudryashov/messege-gateway:$BUILD_NUMBER'
                                         sh 'docker push rkudryashov/messege-gateway:$BUILD_NUMBER'
@@ -96,7 +94,7 @@ node() {
     stage('deploy to env') {
 		echo 'deploing docker images'
 	 docker.withTool('docker'){
-                 withDockerServer([uri: dockerSocket]) {
+                 withDockerServer([uri: 'unix://var/run/docker.sock']) {
                    sh 'docker run -d --name message-gateway -p 8888:8080 rkudryashov/messege-gateway:$BUILD_NUMBER'
                    sh 'docker run -d --name rabbitmq --net=container:message-gateway rabbitmq'
                    sh 'docker run -d --name message-processor --net=container:rabbitmq rkudryashov/messege-processor:$BUILD_NUMBER'
@@ -115,7 +113,7 @@ node() {
 		def procAnswer3 = 'docker logs --tail 1 message-processor'
 		echo 'sending test messages and pushing it in backet'
 		docker.withTool('docker'){
-			withDockerServer([uri: dockerSocket]) {
+			withDockerServer([uri: 'unix://var/run/docker.sock']) {
 				try {
 				sh testMessage1
 					def report1 = sh procAnswer1
