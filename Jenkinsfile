@@ -65,7 +65,7 @@ node(){
 	     dir (proc) {
 			 sh 'cp $(find $JENKINS_HOME/workspace/$JOB_NAME/dir1/message-processor/ -name "message-processor-1.0-SNAPSHOT.jar") message-processor-1.0-SNAPSHOT.$BUILD_NUMBER.jar'
 			 sh 'cp $(find $JENKINS_HOME/workspace/$JOB_NAME/dir1/message-processor/ -name "config.properties") ./config.properties.$BUILD_NUMBER'
-			 sh 'echo \"FROM java:8\\n\\n\\nCOPY . /workdir/\\nWORKDIR /workdir/\\nENTRYPOINT ["java"]\\nCMD ["-jar","message-processor-1.0-SNAPSHOT.\$BUILD_NUMBER.jar","config.properties.\$BUILD_NUMBER"]\" > Dockerfile'
+			 sh 'echo \"FROM java:8\\n\\n\\nCOPY . /workdir/\\nWORKDIR /workdir/\\nENTRYPOINT [\"java\"]\\nCMD [\"-jar\",\"message-processor-1.0-SNAPSHOT.\$BUILD_NUMBER.jar\",\"config.properties.\$BUILD_NUMBER\"]\" > Dockerfile'
 			 docker.withTool('docker') {
 				 withDockerRegistry([credentialsId: 'f9b46bc9-8260-4db8-821c-b9fa96fdb4f2', url: 'https://index.docker.io/v1/']) {
 					 withDockerServer([uri: 'unix:///var/run/docker.sock']) {
