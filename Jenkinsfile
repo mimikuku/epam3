@@ -47,7 +47,7 @@ node(){
     stage('build package') {
 	 dir(workdir) {
                 withMaven(maven: 'maven'){
-                   sh 'mvn -X clean package -Dmaven.test.skip=true > /dev/null 2>$1'
+                   sh 'mvn -X clean package -Dmaven.test.skip=true'
         	}
 		sh 'find . -type f -regex ".*\\.\\(jar\\|war\\)"'
 			
