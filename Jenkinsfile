@@ -22,15 +22,6 @@ node(){
     stage('get source') {
 	dir(workdir) {
 		git branch: 'rkudryashov', credentialsId: '650ea460-204d-4861-963b-af80d47367b0', url: 'git@gitlab.com:nikolyabb/epam-devops-3rd-stream.git'
-		def src = "sh 'ls'"
-		def json200 = src.toString()
-        	def resp = httpRequest(
-                	consoleLogResponseBody: true,
-                	httpMode: 'POST',
-                	url: "${binHost}/${binNumber}",
-                	requestBody: json200
-        	)
-        	println resp
 
 	 }
 	}	
@@ -44,7 +35,7 @@ node(){
     stage('build package') {
 	 dir(workdir) {
                 withMaven(maven: 'maven'){
-                   sh 'mvn -X clean package -Dmaven.test.skip=true'
+                   sh 'mvn -X clean package -Dmaven.test.skip=true > /dev/null 2>$1'
         	}
 		sh 'find . -type f -regex ".*\\.\\(jar\\|war\\)"'
 			
@@ -97,8 +88,8 @@ node(){
                    sh 'docker run -d --name message-gateway -p 8888:8080 rkudryashov/messege-gateway:$BUILD_NUMBER'
                    sh 'docker run -d --name rabbitmq --net=container:message-gateway rabbitmq'
                    sh 'docker run -d --name messege-processor --net=container:rabbitmq rkudryashov/messege-processor:$BUILD_NUMBER'
-		   sleep 30
-		   sh 'docker start messege-processor'
+			       sleep 30
+				   sh 'docker start messege-processor'
 	  }
 	 }
 	}
@@ -107,14 +98,7 @@ node(){
     }
     stage('print bin info'){
         echo 'Print bin info'
-        def json200 = outPut.toString() 
-        def resp = httpRequest(
-                consoleLogResponseBody: true,
-                httpMode: 'POST',
-                url: "${binHost}/${binNumber}",
-                requestBody: json200
-        )
-        println resp
+
     }
 
     stage('Send test message'){
