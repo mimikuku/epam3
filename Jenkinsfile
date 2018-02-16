@@ -1,30 +1,45 @@
 
 
 import groovy.json.JsonSlurper
+import groovy.json.JsonOutput
+def binHost = 'http://requestbin.fullcontact.com'
 def workdir = "dir1"
-def art = "art"
-def proc = "docker_image_proc"
-def gateway = "docker_image_gateway"
+def art = "artifactory"
+def proc = "message_processor_$BUILD_NUMBER"
+def gateway = "message_gateway_$BUILD_NUMBER"
 node(){
-    stage('test'){
-        sh "export"
-        dir(workdir) {
-            deleteDir()
-	}
+       stage('Create bin'){
+       echo 'Going to create bin'
+       def rbin = httpRequest(
+               consoleLogResponseBody: true,
+               httpMode: 'POST',
+               url: "${binHost}/api/v1/bins"
+               )
+        def json = new JsonSlurper().parseText(rbin.getContent())
+        binNumber = json.name.toString()
+        println binNumber
 	}
     stage('get source') {
 	dir(workdir) {
 		git branch: 'rkudryashov', credentialsId: '650ea460-204d-4861-963b-af80d47367b0', url: 'git@gitlab.com:nikolyabb/epam-devops-3rd-stream.git'
-		sh 'ls -lah'
+		def src = "sh 'ls'"
+		def json200 = src.toString()
+        	def resp = httpRequest(
+                	consoleLogResponseBody: true,
+                	httpMode: 'POST',
+                	url: "${binHost}/${binNumber}",
+                	requestBody: json200
+        	)
+        	println resp
+
 	 }
 	}	
     stage('run tests') {
 	dir(workdir) {
 		withMaven(maven: 'maven'){
-		   sh 'mvn clean test'
+		   sh 'mvn clean test > maven.tests-$BUILD_NUMBER.txt'
 	    }
 	}
-
     }
     stage('build package') {
 	 dir(workdir) {
@@ -43,34 +58,38 @@ node(){
     stage('save artifact') {
 	 dir (workdir){
 	    //sh 'find ./message-processor/ ! -regex "\\(.*etc/*.*\\|.*\\.jar\\)" -delete'
-	    dir (proc){
-		sh 'cp $(find $JENKINS_HOME/workspace/$JOB_NAME/dir1/message-processor/ -name "message-processor-1.0-SNAPSHOT.jar") .'
-		sh 'cp $(find $JENKINS_HOME/workspace/$JOB_NAME/dir1/message-processor/ -name "config.properties") .' 	
-		sh 'echo \'FROM java:8\\n\\n\\nCOPY . /workdir/\\nWORKDIR /workdir/\\nENTRYPOINT ["java"]\\nCMD ["-jar","message-processor-1.0-SNAPSHOT.jar","config.properties"]\' > Dockerfile'
-		docker.withTool('docker'){
-			withDockerRegistry([credentialsId: 'f9b46bc9-8260-4db8-821c-b9fa96fdb4f2', url: 'https://index.docker.io/v1/']) {
-                   		withDockerServer([uri: 'unix:///var/run/docker.sock']) {
-                        		sh 'docker build -t messege-processor:$BUILD_NUMBER .'
-					sh 'docker tag messege-processor:$BUILD_NUMBER rkudryashov/messege-processor:$BUILD_NUMBER'
-					sh 'docker push rkudryashov/messege-processor:$BUILD_NUMBER'
-	   }
-	  }	
-	 }
-	}
-	     dir (gateway){
+	    dir (art){
+			sh 'cp $(find $JENKINS_HOME/workspace/$JOB_NAME/dir1 -name "maven.tests-$BUILD_NUMBER.txt") .'
+	     dir (proc) {
+			 sh 'cp $(find $JENKINS_HOME/workspace/$JOB_NAME/dir1/message-processor/ -name "message-processor-1.0-SNAPSHOT.jar") .message-processor-1.0-SNAPSHOT.$BUILD_NUMBER.jar'
+			 sh 'cp $(find $JENKINS_HOME/workspace/$JOB_NAME/dir1/message-processor/ -name "config.properties") ./config.properties.$BUILD_NUMBER'
+			 sh 'echo \'FROM java:8\\n\\n\\nCOPY . /workdir/\\nWORKDIR /workdir/\\nENTRYPOINT ["java"]\\nCMD ["-jar","message-processor-1.0-SNAPSHOT.$BUILD_NUMBER.jar","config.properties.$BUILD_NUMBER"]\' > Dockerfile'
+			 docker.withTool('docker') {
+				 withDockerRegistry([credentialsId: 'f9b46bc9-8260-4db8-821c-b9fa96fdb4f2', url: 'https://index.docker.io/v1/']) {
+					 withDockerServer([uri: 'unix:///var/run/docker.sock']) {
+						 sh 'docker build -t messege-processor:$BUILD_NUMBER .'
+						 sh 'docker tag messege-processor:$BUILD_NUMBER rkudryashov/messege-processor:$BUILD_NUMBER'
+						 sh 'docker push rkudryashov/messege-processor:$BUILD_NUMBER'
+						 sh 'docker rmi rkudryashov/messege-processor:$BUILD_NUMBER messege-processor:$BUILD_NUMBER'
+					 }
+				 }
+	        }
+		}
+		 dir (gateway){
                 sh 'cp -R $JENKINS_HOME/workspace/$JOB_NAME/dir1/message-gateway/* .'
                 sh 'echo \'FROM maven\\n\\n\\nCOPY . /workdir/\\nWORKDIR /workdir/\\nENTRYPOINT ["mvn"]\\nCMD ["tomcat7:run"]\' > Dockerfile'
-		docker.withTool('docker'){
+				docker.withTool('docker'){
                         withDockerRegistry([credentialsId: 'f9b46bc9-8260-4db8-821c-b9fa96fdb4f2', url: 'https://index.docker.io/v1/']) {
                                 withDockerServer([uri: 'unix:///var/run/docker.sock']) {
                                         sh 'docker build -t messege-gateway:$BUILD_NUMBER .'
                                         sh 'docker tag messege-gateway:$BUILD_NUMBER rkudryashov/messege-gateway:$BUILD_NUMBER'
                                         sh 'docker push rkudryashov/messege-gateway:$BUILD_NUMBER'
-	     }
-	    }		
-	   }	
+									    sh 'docker rmi rkudryashov/messege-gateway:$BUILD_NUMBER messege-gateway:$BUILD_NUMBER'
+	                                    }
+						        }
+				}
+		 }
 	  }
-	 }
 	}
     stage('deploy to env') {
 	 docker.withTool('docker'){
@@ -84,37 +103,24 @@ node(){
 	 }
 	}
     stage('provision env') {
-	echo 'Going to create bin'
-        def createBody = """
-	{
-  "status": 200,
-  "statusText": "OK",
-  "httpVersion": "HTTP/1.1",
-  "headers": [],
-  "cookies": [],
-  "content": {
-    "mimeType": "text/plain",
-    "text": ""
-  	     }
-	}
-        """
-        def response = httpRequest(
+
+    }
+    stage('print bin info'){
+        echo 'Print bin info'
+        def json200 = outPut.toString() 
+        def resp = httpRequest(
+                consoleLogResponseBody: true,
                 httpMode: 'POST',
-                url: 'http://mockbin.org/bin/create',
-                validResponseCodes: '100:299',
-                requestBody: createBody.toString()
+                url: "${binHost}/${binNumber}",
+                requestBody: json200
         )
-        println "-----------------------"
-        println response.content.toString()
+        println resp
+    }
 
-        println "-----------------------"
-        def jsonSlrpBody = new JsonSlurper().parseText(response.content)
-        println jsonSlrpBody.toString()
-
-        println "-----------------------"
-        def jsonSlrpHeaders = response.headers
-        println jsonSlrpHeaders
-
+    stage('Send test message'){
+        echo 'Going to send message'
+        println "${binHost}/${binNumber}?inspect"
+    }
     }
 
     stage('integration test') {
