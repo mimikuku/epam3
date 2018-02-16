@@ -19,6 +19,18 @@ node(){
         binNumber = json.name.toString()
         println binNumber
 	}
+	stage('prepere') {
+		docker.withTool('docker') {
+			withDockerServer([uri: 'unix:///var/run/docker.sock']) {
+				try {
+					sh 'docker stop message-processor rabbitmq message-gateway'
+					sh 'docker rm message-processor rabbitmq message-gateway'
+				}catch (err) {
+					echo 'Containers not created'
+				}
+			}
+		}
+	}
     stage('get source') {
 	dir(workdir) {
 		git branch: 'rkudryashov', credentialsId: '650ea460-204d-4861-963b-af80d47367b0', url: 'git@gitlab.com:nikolyabb/epam-devops-3rd-stream.git'
@@ -87,9 +99,9 @@ node(){
                  withDockerServer([uri: 'unix:///var/run/docker.sock']) {
                    sh 'docker run -d --name message-gateway -p 8888:8080 rkudryashov/messege-gateway:$BUILD_NUMBER'
                    sh 'docker run -d --name rabbitmq --net=container:message-gateway rabbitmq'
-                   sh 'docker run -d --name messege-processor --net=container:rabbitmq rkudryashov/messege-processor:$BUILD_NUMBER'
+                   sh 'docker run -d --name message-processor --net=container:rabbitmq rkudryashov/messege-processor:$BUILD_NUMBER'
 			       sleep 30
-				   sh 'docker start messege-processor'
+				   sh 'docker start message-processor'
 	  }
 	 }
 	}
