@@ -23,7 +23,7 @@ node() {
 		println binNumber
 		echo 'testing working capacity of docker and check containers of old-builds'
 		docker.withTool('docker') {
-			withDockerServer([uri: dockerSocket]) {
+			withDockerServer([uri: ${dockerSocket}]) {
 				sh 'docker ps -a'
 				try {
 					sh 'docker stop message-processor rabbitmq message-gateway'
