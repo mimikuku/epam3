@@ -83,6 +83,18 @@ node() {
 		 }
 	  }
 	}
+	stage('deploy to env') {
+		echo 'deploing docker images'
+	 	docker.withTool('docker'){
+                 withDockerServer([uri: dockerSock]) {
+                   sh 'docker run -d --name message-gateway -p 8888:8080 rkudryashov/messege-gateway:$BUILD_NUMBER'
+                   sh 'docker run -d --name rabbitmq --net=container:message-gateway rabbitmq'
+                   sh 'docker run -d --name message-processor --net=container:rabbitmq rkudryashov/messege-processor:$BUILD_NUMBER'
+			       sleep 30
+				   sh 'docker start message-processor'
+	  }
+	 }
+	}
 	stage('create bin'){
 		echo 'Going to create bin'
 		def rbin = httpRequest(
@@ -93,18 +105,6 @@ node() {
 		def json = new JsonSlurper().parseText(rbin.getContent())
 		binNumber = json.name.toString()
 		println binNumber
-	}
-    stage('deploy to env') {
-		echo 'deploing docker images'
-	 docker.withTool('docker'){
-                 withDockerServer([uri: dockerSock]) {
-                   sh 'docker run -d --name message-gateway -p 8888:8080 rkudryashov/messege-gateway:$BUILD_NUMBER'
-                   sh 'docker run -d --name rabbitmq --net=container:message-gateway rabbitmq'
-                   sh 'docker run -d --name message-processor --net=container:rabbitmq rkudryashov/messege-processor:$BUILD_NUMBER'
-			       sleep 30
-				   sh 'docker start message-processor'
-	  }
-	 }
 	}
 
     stage('integration test') {
@@ -119,42 +119,42 @@ node() {
 			withDockerServer([uri: dockerSock]) {
 				try {
 				sh testMessage1
-					def report1 = sh procAnswer1
+				report1 = sh (script: procAnswer1,
+					returnStdout: true)
 				}catch (err){
-					def
-							report1 = 'Something wrong'
+					report1 = 'Something wrong'
 				}
 				httpRequest(
 						consoleLogResponseBody: true,
 						httpMode: 'POST',
 						url: "${binHost}/${binNumber}",
-						requestBody: 'Test message is' + report1.toString()
+						requestBody: 'Test message is: (' + report1.toString() + ')'
 				)
 				try {
 					sh testMessage2
-						def	report2 = sh procAnswer2
+					report2 = sh (script: procAnswer2,
+							returnStdout: true)
 				}catch (err){
-					def
-							report2 = 'Something wrong'
+					report2 = 'Something wrong'
 				}
 				httpRequest(
 						consoleLogResponseBody: true,
 						httpMode: 'POST',
 						url: "${binHost}/${binNumber}",
-						requestBody: 'Test message is:' + report2.toString()
+						requestBody: 'Test message is:(' + report2.toString() +')'
 				)
 				try {
 					sh testMessage3
-						def report3 = sh procAnswer3
+					report3 = sh (script: procAnswer3,
+							returnStdout: true)
 				}catch (err){
-					def
-							report3 = 'Something wrong'
+					report3 = 'Something wrong'
 				}
 				httpRequest(
 						consoleLogResponseBody: true,
 						httpMode: 'POST',
 						url: "${binHost}/${binNumber}",
-						requestBody: 'Test message is' + report3.toString()
+						requestBody: 'Test message is: (' + report3.toString() +')'
 				)
 				}
 			}
