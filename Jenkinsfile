@@ -92,6 +92,7 @@ node() {
                    sh 'docker run -d --name message-processor --net=container:rabbitmq rkudryashov/messege-processor:$BUILD_NUMBER'
 			       sleep 30
 				   sh 'docker start message-processor'
+				   sleep 20
 	  }
 	 }
 	}
