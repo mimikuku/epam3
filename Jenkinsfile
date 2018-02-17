@@ -83,6 +83,17 @@ node() {
 		 }
 	  }
 	}
+	stage('create bin'){
+		echo 'Going to create bin'
+		def rbin = httpRequest(
+				consoleLogResponseBody: true,
+				httpMode: 'POST',
+				url: "${binHost}/api/v1/bins"
+		)
+		def json = new JsonSlurper().parseText(rbin.getContent())
+		binNumber = json.name.toString()
+		println binNumber
+	}
     stage('deploy to env') {
 		echo 'deploing docker images'
 	 docker.withTool('docker'){
@@ -97,14 +108,6 @@ node() {
 	}
 
     stage('integration test') {
-		echo 'Going to create bin'
-		def rbin = httpRequest(
-				consoleLogResponseBody: true,
-				httpMode: 'POST',
-				url: "${binHost}/api/v1/bins"
-		)
-		def json = new JsonSlurper().parseText(rbin.getContent())
-		binNumber = json.name.toString()
 		def testMessage1 = 'docker exec message-gateway curl http://localhost:8080/message -X POST -d \'{"messageId":1, "timestamp":1234, "protocolVersion":"1.0.0", "messageData":{"mMX":1234, "mPermGen":1234}}\''
 		def procAnswer1 = 'docker logs --tail 1 message-processor'
 		def testMessage2 = 'docker exec message-gateway curl http://localhost:8080/message -X POST -d \'{"messageId":2, "timestamp":2234, "protocolVersion":"1.0.1", "messageData":{"mMX":1234, "mPermGen":5678, "mOldGen":22222}}\''
