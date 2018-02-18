@@ -35,7 +35,7 @@ node() {
 		echo 'Runing maven tests and output in file'
 	dir(workdir) {
 		withMaven(maven: 'maven'){
-		   sh 'mvn clean test > maven.tests-$BUILD_NUMBER.txt'
+		   sh 'mvn clean test > maven.tests-$BUILD_NUMBER.txt' //write output in file
 	    }
 	}
     }
@@ -48,10 +48,10 @@ node() {
 	 		}
 	 	}
     stage('save artifact') {
-		echo 'saving artifacts and building docker images'
+		echo 'saving artifacts and building docker images' //save artifacts, files with tests output and Dockerfiles in directory "artifactory"
 	 dir (workdir){
 	    dir (art){
-			sh 'cp $(find $JENKINS_HOME/workspace/$JOB_NAME/dir1 -name "maven.tests-$BUILD_NUMBER.txt") .'
+			sh 'mv $(find $JENKINS_HOME/workspace/$JOB_NAME/dir1 -name "maven.tests-$BUILD_NUMBER.txt") .'
 	     dir (proc) {
 			 sh 'cp $(find $JENKINS_HOME/workspace/$JOB_NAME/dir1/message-processor/ -name "message-processor-1.0-SNAPSHOT.jar") .'
 			 sh 'cp $(find $JENKINS_HOME/workspace/$JOB_NAME/dir1/message-processor/ -name "config.properties") .'
@@ -90,9 +90,9 @@ node() {
                    sh 'docker run -d --name message-gateway -p 8888:8080 rkudryashov/messege-gateway:$BUILD_NUMBER'
                    sh 'docker run -d --name rabbitmq --net=container:message-gateway rabbitmq'
                    sh 'docker run -d --name message-processor --net=container:rabbitmq rkudryashov/messege-processor:$BUILD_NUMBER'
-			       sleep 30
+			       sleep 30 //rabbitmq contauner need 30 seconds to load, and message-gateway contauner wait it.
 				   sh 'docker start message-processor'
-				   sleep 20
+				   sleep 20 //wait load message-gateway contauner to send messages on frontend.
 	  }
 	 }
 	}
