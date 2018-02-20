@@ -1,5 +1,4 @@
 
-
 import groovy.json.JsonSlurper
 import groovy.json.JsonOutput
 def binHost = 'http://requestbin.fullcontact.com'
@@ -109,11 +108,11 @@ node() {
 	}
 
     stage('integration test') {
-		def testMessage1 = 'docker exec message-gateway curl http://localhost:8080/message -X POST -d \'{"messageId":1, "timestamp":1234, "protocolVersion":"1.0.0", "messageData":{"mMX":1234, "mPermGen":1234}}\''
+		def testMessage1 = 'docker exec message-gateway curl -s -o /dev/null/ -w "%{http_code} "http://localhost:8080/message -X POST -d \'{"messageId":1, "timestamp":1234, "protocolVersion":"1.0.0", "messageData":{"mMX":1234, "mPermGen":1234}}\''
 		def procAnswer1 = 'docker logs --tail 1 message-processor'
-		def testMessage2 = 'docker exec message-gateway curl http://localhost:8080/message -X POST -d \'{"messageId":2, "timestamp":2234, "protocolVersion":"1.0.1", "messageData":{"mMX":1234, "mPermGen":5678, "mOldGen":22222}}\''
+		def testMessage2 = 'docker exec message-gateway curl -s -o /dev/null/ -w "%{http_code} http://localhost:8080/message -X POST -d \'{"messageId":2, "timestamp":2234, "protocolVersion":"1.0.1", "messageData":{"mMX":1234, "mPermGen":5678, "mOldGen":22222}}\''
 		def procAnswer2 = 'docker logs --tail 1 message-processor'
-		def testMessage3 = 'docker exec message-gateway curl http://localhost:8080/message -X POST -d \'{"messageId":3, "timestamp":3234, "protocolVersion":"2.0.0", "payload":{"mMX":1234, "mPermGen":5678, "mOldGen":22222, "mYoungGen":333333}}\''
+		def testMessage3 = 'docker exec message-gateway curl -s -o /dev/null/ -w "%{http_code} http://localhost:8080/message -X POST -d \'{"messageId":3, "timestamp":3234, "protocolVersion":"2.0.0", "payload":{"mMX":1234, "mPermGen":5678, "mOldGen":22222, "mYoungGen":333333}}\''
 		def procAnswer3 = 'docker logs --tail 1 message-processor'
 		echo 'sending test messages and pushing it in backet'
 		docker.withTool('docker'){
@@ -122,8 +121,9 @@ node() {
 				sh testMessage1
 				report1 = sh (script: procAnswer1,
 					returnStdout: true)
+				report1 == '200'
 				}catch (err){
-					report1 = 'Something wrong'
+					report1 = err.getMessage()
 				}
 				httpRequest(
 						consoleLogResponseBody: true,
@@ -135,8 +135,9 @@ node() {
 					sh testMessage2
 					report2 = sh (script: procAnswer2,
 							returnStdout: true)
+					    report2 == '200'
 				}catch (err){
-					report2 = 'Something wrong'
+					report2 = err.getMessage()
 				}
 				httpRequest(
 						consoleLogResponseBody: true,
@@ -148,8 +149,9 @@ node() {
 					sh testMessage3
 					report3 = sh (script: procAnswer3,
 							returnStdout: true)
+					report3 == '200'
 				}catch (err){
-					report3 = 'Something wrong'
+					report3 = err.getMessage()
 				}
 				httpRequest(
 						consoleLogResponseBody: true,
