@@ -30,11 +30,7 @@ node(){
             withMaven(maven: 'maven') {
                 sh 'mvn package -Dmaven.test.skip=true'
             }
-            docker.withTool('docker') {
-                withDockerServer([uri: 'tcp://127.0.0.1:2376']) {
-                    sh 'docker ps'
-                }
-            }
+        sh 'docker ps'      
         }
     }
     stage('save artifact') {
