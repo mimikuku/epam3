@@ -45,9 +45,6 @@ node(){
         sh 'docker run -d --link rabbitmq --name processor niknestor/processor:$BUILD_NUMBER'
         sh 'docker run -d --link rabbitmq --name gateway niknestor/gateway:$BUILD_NUMBER'
 	sh 'docker ps'
-
-
-
     }
     stage('create bin') {
         echo 'Going to create bin'
@@ -86,5 +83,4 @@ node(){
                      requestBody: '$buildReport')
         echo 'Report available on ${binURL}/${binNum}?inspect'
     }
-}
 }
