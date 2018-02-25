@@ -7,10 +7,16 @@ def binURL = "https://requestbin.fullcontact.com"
 def buildReport = "Build number ${BUILD_NUMBER} \n-----------------------------"
 
 node(){
-    stage('test'){
+    stage('prepare'){
         sh "export"
         dir(workdir) {
             deleteDir()
+        }
+        try {
+            sh 'docker rm -f rabbitmq message-processor message-gateway'
+            sh 'docker rmi -f rabbitmq message-processor:* message-gateway:*'
+        }catch (error){
+            echo 'Clean enviroment'
         }
     }
     stage('get source') {
