@@ -77,6 +77,7 @@ node(){
             i++
             echo 'Test ${i}: ${getlogProcessor}'
             buildReport += 'Test ${i}: ${getlogProcessor}\n'
+        }
     }
     stage('generate report') {
         httprequest( consoleLogResponseBody: true,
