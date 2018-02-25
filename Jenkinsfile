@@ -71,7 +71,7 @@ node(){
         ]
         messages.eachWithIndex{ message, i ->
             try {
-                sh 'docker exec gateway $message'
+                sh 'docker exec gateway ${message}'
                 def getLogProcessor = sh(script:"docker logs --tail 1 message-processor", returnStdout: true)
                 assert getLogProcessor.contains('id=${i}')
                 $(getlogProcessor) == '200'
@@ -84,10 +84,11 @@ node(){
         }
     }
     stage('generate report') {
-        httprequest( consoleLogResponseBody: true,
-                     httpMode: 'POST',
-                     url: '${binURL}/${binNum}',
-                     requestBody: '$buildReport')
-        echo 'Report available on ${binURL}/${binNum}?inspect'
+        httpRequest( 
+            consoleLogResponseBody: true,
+            httpMode: 'POST',
+            url: "${binURL}/${binNum}",
+            requestBody: '$buildReport')
+        echo "Report available on ${binURL}/${binNum}?inspect"
     }
 }
