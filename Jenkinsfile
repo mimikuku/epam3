@@ -57,11 +57,11 @@ node(){
         echo 'Going to create bin'
         def response = httpRequest(
                 httpMode: 'POST',
-                url: '${binURL}/api/v1/bins',
+                url: "${binURL}/api/v1/bins",
                 validResponseCodes: '200',
         ).getContent()
 	def binNum = new JsonSlurper().parseText(response).name.toString()
-	echo 'Bin ${binNum} created on ${binURL}'
+	echo "Bin ${binNum} created on ${binURL}"
     }
     stage('integration tests') {
         def messages = [
