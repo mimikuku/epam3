@@ -71,16 +71,16 @@ node(){
         ]
         messages.eachWithIndex{ message, i ->
             try {
-                sh 'docker exec gateway ${message}'
+                sh "docker exec gateway ${message}"
                 def getLogProcessor = sh(script:"docker logs --tail 1 message-processor", returnStdout: true)
-                assert getLogProcessor.contains('id=${i}')
+                assert getLogProcessor.contains("id=${i}")
                 $(getlogProcessor) == '200'
             }catch (error){
                 getLogProcessor = error.getMessage()
             }
             i++
-            echo 'Test ${i}: ${getlogProcessor}'
-            buildReport += 'Test ${i}: ${getlogProcessor}\n'
+            echo "Test ${i}: ${getlogProcessor}"
+            buildReport += "Test ${i}: ${getlogProcessor}\n"
         }
     }
     stage('generate report') {
