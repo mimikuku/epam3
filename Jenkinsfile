@@ -30,13 +30,21 @@ node(){
             withMaven(maven: 'maven') {
                 sh 'mvn package -Dmaven.test.skip=true'
             }
-        sh 'docker ps'      
+        sh 'docker build -i niknestor/processor:$BUILD_NUMBER -f message-processor/Dockerfile message-processor/'
+        sh 'docker build -i niknestor/gateway:$BUILD_NUMBER -f message-gateway/Dockerfile message-gateway/'
         }
     }
     stage('save artifact') {
 
     }
     stage('deploy to env') {
+        sh 'docker run -d --name rabbitmq rabbitmq'
+        sleep 25
+        sh 'docker run -d --link rabbitmq --name processor niknestor/processor:$BUILD_NUMBER'
+        sh 'docker run -d --link rabbitmq --name gateway niknestor/gateway:$BUILD_NUMBER'
+	sh 'docker ps'
+
+
 
     }
     stage('provision env') {
