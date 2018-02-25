@@ -87,4 +87,4 @@ node(){
         echo 'Report available on ${binURL}/${binNum}?inspect'
     }
 }
-
+}
