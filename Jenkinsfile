@@ -13,7 +13,8 @@ node(){
             deleteDir()
         }
         try {
-            sh 'docker rm -f rabbitmq message-processor message-gateway'
+            sh 'docker ps -a'
+            sh 'docker rm -f rabbitmq processor gateway'
             sh 'docker rmi -f rabbitmq message-processor:* message-gateway:*'
         }catch (error){
             echo 'Clean enviroment'
