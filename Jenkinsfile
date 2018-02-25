@@ -3,6 +3,8 @@ import groovy.json.JsonSlurper
 
 
 def workdir = "dir1"
+def binURL = "https://requestbin.fullcontact.com"
+def buildReport = "Build number $(BUILD_NUMBER) \n-----------------------------"
 
 node(){
     stage('test'){
@@ -47,44 +49,41 @@ node(){
 
 
     }
-    stage('provision env') {
-
-    }
-    stage('integration test') {
-
-    }
-    stage('send report') {
+    stage('create bin') {
         echo 'Going to create bin'
-        def createBody = """
-{
-  "status": 200,
-  "statusText": "OK",
-  "httpVersion": "HTTP/1.1",
-  "headers": [],
-  "cookies": [],
-  "content": {
-    "mimeType": "text/plain",
-    "text": ""
-  }
-}
-        """
         def response = httpRequest(
                 httpMode: 'POST',
-                url: 'http://mockbin.org/bin/create',
-                validResponseCodes: '100:299',
-                requestBody: createBody.toString()
-        )
-        println "-----------------------"
-        println response.content.toString()
-
-        println "-----------------------"
-        def jsonSlrpBody = new JsonSlurper().parseText(response.content)
-        println jsonSlrpBody.toString()
-
-        println "-----------------------"
-        def jsonSlrpHeaders = response.headers
-        println jsonSlrpHeaders
-
+                url: '${binURL}/api/v1/bins',
+                validResponseCodes: '200',
+        ).getContent()
+	def binNum = new JsonSlurper().parseText(response).name.toString()
+	echo 'Bin ${binNum} created on ${binURL}'
+    }
+    stage('integration tests') {
+        def messages = [
+            'curl http://localhost:8080/message -X POST -d '{"messageId":1, "timestamp":1234, "protocolVersion":"1.0.0", "messageData":{"mMX":1234, "mPermGen":1234}}'',
+            'curl http://localhost:8080/message -X POST -d '{"messageId":2, "timestamp":2234, "protocolVersion":"1.0.1", "messageData":{"mMX":1234, "mPermGen":5678, "mOldGen":22222}}'',
+            'curl http://localhost:8080/message -X POST -d '{"messageId":3, "timestamp":3234, "protocolVersion":"2.0.0", "payload":{"mMX":1234, "mPermGen":5678, "mOldGen":22222, "mYoungGen":333333}''
+        ]
+        messages.eachWithIndex{ message, i ->
+            try {
+                sh 'docker exec gateway $message'
+                def getLogProcessor = sh(script:"docker logs --tail 1 message-processor", returnStdout: true)
+                assert getLogProcessor.contains("id=$(i)")
+                $(getlogProcessor) == '200'
+            }catch (error){
+                getLogProcessor = error.getMessage()
+            }
+            i++
+            echo 'Test $(i): $(getlogProcessor)'
+            buildReport += 'Test $(i): $(getlogProcessor)\n'
+    }
+    stage('generate report') {
+        httprequest( consoleLogResponseBody: true,
+                     httpMode: 'POST',
+                     url: '${binURL}/$binNum',
+                     requestBody: '$buildReport')
+        echo 'Report available on ${binURL}/$(binNum)?inspect'
     }
 }
 
