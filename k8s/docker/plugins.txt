@@ -74,3 +74,5 @@ variant
 windows-slaves
 ws-cleanup
 bouncycastle-api
+http-request
+
