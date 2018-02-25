@@ -50,7 +50,7 @@ node(){
         sh 'docker run -d --name rabbitmq rabbitmq'
         sleep 25
         sh 'docker run -d --link rabbitmq --name processor niknestor/processor:$BUILD_NUMBER'
-        sh 'docker run -d --link rabbitmq --name gateway niknestor/gateway:$BUILD_NUMBER'
+        sh 'docker run -d --link rabbitmq --name gateway -p 18080:8080 niknestor/gateway:$BUILD_NUMBER'
 	sh 'docker ps'
     }
     stage('create bin') {
