@@ -4,7 +4,7 @@ import groovy.json.JsonSlurper
 
 def workdir = "dir1"
 def binURL = "https://requestbin.fullcontact.com"
-def buildReport = "Build number $(BUILD_NUMBER) \n-----------------------------"
+def buildReport = "Build number ${BUILD_NUMBER} \n-----------------------------"
 
 node(){
     stage('test'){
@@ -69,21 +69,21 @@ node(){
             try {
                 sh 'docker exec gateway $message'
                 def getLogProcessor = sh(script:"docker logs --tail 1 message-processor", returnStdout: true)
-                assert getLogProcessor.contains("id=$(i)")
+                assert getLogProcessor.contains('id=${i}')
                 $(getlogProcessor) == '200'
             }catch (error){
                 getLogProcessor = error.getMessage()
             }
             i++
-            echo 'Test $(i): $(getlogProcessor)'
-            buildReport += 'Test $(i): $(getlogProcessor)\n'
+            echo 'Test ${i}: ${getlogProcessor}'
+            buildReport += 'Test ${i}: ${getlogProcessor}\n'
     }
     stage('generate report') {
         httprequest( consoleLogResponseBody: true,
                      httpMode: 'POST',
-                     url: '${binURL}/$binNum',
+                     url: '${binURL}/${binNum}',
                      requestBody: '$buildReport')
-        echo 'Report available on ${binURL}/$(binNum)?inspect'
+        echo 'Report available on ${binURL}/${binNum}?inspect'
     }
 }
 
