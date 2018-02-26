@@ -80,7 +80,7 @@ node(){
             consoleLogResponseBody: true,
             httpMode: 'POST',
             url: "${binURL}/${binNum}",
-            requestBody: '$buildReport')
+            requestBody: "'${buildReport}")
         echo "Report available on ${binURL}/${binNum}?inspect"
     }
 }
