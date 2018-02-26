@@ -74,8 +74,8 @@ node(){
         messages.eachWithIndex{ message, i ->
                 sh "docker exec gateway ${message}"
                 def getLogProcessor = sh (script:'docker logs --tail 1 processor', returnStdout: true)
-                report${i} = getLogProcessor.toString()
-                buildReport += "Test ${i}: ${getlogProcessor}\n"
+                report = getLogProcessor.toString()
+                buildReport += "Test ${i}: $(report)\n"
                 i++
         }
     }
