@@ -47,11 +47,13 @@ node(){
 
     }
     stage('deploy to env') {
-        sh 'docker run -d --name rabbitmq rabbitmq'
+        sh 'docker run -d --name gateway -p 18080:8080 niknestor/gateway:$BUILD_NUMBER'        
+        sh 'docker run -d --name rabbitmq --net=container:gateway rabbitmq'
+        sh 'docker run -d --name processor --net=container:rabbitmq niknestor/processor:$BUILD_NUMBER'
+	sleep 25
+        sh 'docker start processor'
         sleep 25
-        sh 'docker run -d --link rabbitmq --name processor niknestor/processor:$BUILD_NUMBER'
-        sh 'docker run -d --link rabbitmq --name gateway niknestor/gateway:$BUILD_NUMBER'
-	sh 'docker ps'
+        sh 'docker ps'
     }
     stage('create bin') {
         echo 'Going to create bin'
