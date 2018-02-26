@@ -56,6 +56,8 @@ node(){
         sh 'docker run -d --name rabbitmq --net=container:gateway rabbitmq'
         sleep 30
         sh 'docker run -d --name processor --net=container:rabbitmq niknestor/processor:$BUILD_NUMBER'
+        sleep 10
+        sh' docker start processor'
         sh 'docker ps'
     }
     stage('ntergration tests') {
