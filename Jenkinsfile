@@ -73,17 +73,12 @@ node(){
             'curl http://localhost:8080/message -X POST -d \'{"messageId":3, "timestamp":3234, "protocolVersion":"2.0.0", "payload":{"mMX":1234, "mPermGen":5678, "mOldGen":22222, "mYoungGen":333333}\''
         ]
         messages.eachWithIndex{ message, i ->
-            try {
                 sh "docker exec gateway ${message}"
                 def getLogProcessor = sh(script:"docker logs --tail 1 processor", returnStdout: true)
-                assert getLogProcessor.contains("id=${i}")
-                $(getlogProcessor) == '200'
                 i++
+                assert getLogProcessor.contains("id=${i}")
                 echo "Test ${i}: ${getlogProcessor}"
                 buildReport += "Test ${i}: ${getlogProcessor}\n"
-            }catch (error){
-                getLogProcessor = error.getMessage()
-            }
         }
     }
     stage('generate report') {
