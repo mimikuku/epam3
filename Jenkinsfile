@@ -67,7 +67,8 @@ node(){
         ).getContent()
 	def binNum = new JsonSlurper().parseText(response).name.toString()
 	buildReport += "Bin ${binNum} created on ${binURL}\n"
-        def gatewayIP = sh "docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' gateway"
+        def gatewayIP = "172.18.0.4"
+        echo '${gatewayIP} \n'
         def messages = [
             'curl http://${gatewayIP}:8080/message -X POST -d \'{"messageId":1, "timestamp":1234, "protocolVersion":"1.0.0", "messageData":{"mMX":1234, "mPermGen":1234}}\'',
             'curl http://${gatewayIP}:8080/message -X POST -d \'{"messageId":2, "timestamp":2234, "protocolVersion":"1.0.1", "messageData":{"mMX":1234, "mPermGen":5678, "mOldGen":22222}}\'',
