@@ -63,7 +63,7 @@ node(){
                 validResponseCodes: '200',
         ).getContent()
 	def binNum = new JsonSlurper().parseText(response).name.toString()
-	echo "Bin ${binNum} created on ${binURL}"
+	buildReport += "Bin ${binNum} created on ${binURL}\n"
     }
     stage('integration tests') {
         def messages = [
