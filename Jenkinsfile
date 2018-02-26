@@ -12,6 +12,10 @@ node(){
         dir(workdir) {
             deleteDir()
         }
+        echo 'Delete all stopped containers'
+        sh 'docker ps -q -f status=exited | xargs --no-run-if-empty docker rm'
+        echo ' Delete all dangling (unused) images'
+        sh 'docker images -q -f dangling=true | xargs --no-run-if-empty docker rmi'
         try {
             sh 'docker ps -a'
             sh 'docker rm -f rabbitmq processor gateway'

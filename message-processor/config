@@ -1,7 +1,7 @@
 # name of message queue from where to consume messages 
 queue.name=messageGatewayQueue 
 # message broker hostname 
-queue.host=rabbit 
+queue.host=rabbitmq 
 # TYPE_A = PrintMessageProcessor, TYPE_B = PrintTwiceMessageProcessor 
 processor.type=TYPE_A
 
