@@ -52,7 +52,7 @@ node(){
     }
     stage('deploy to env') {
         sh 'docker run -d --name rabbitmq --network="env" rabbitmq'
-        sleep 10
+        sleep 30
         sh 'docker run -d --name processor --network="env" niknestor/processor:$BUILD_NUMBER'        
         sh 'docker run -d --name gateway --network="env" -p 18080:8080 niknestor/gateway:$BUILD_NUMBER'        
 	sleep 10
