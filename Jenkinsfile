@@ -74,7 +74,7 @@ node(){
         messages.eachWithIndex{ message, i ->
             try {
                 sh "docker exec gateway ${message}"
-                def getLogProcessor = sh(script:"docker logs --tail 1 message-processor", returnStdout: true)
+                def getLogProcessor = sh(script:"docker logs --tail 1 processor", returnStdout: true)
                 assert getLogProcessor.contains("id=${i}")
                 $(getlogProcessor) == '200'
             }catch (error){
