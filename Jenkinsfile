@@ -52,10 +52,10 @@ node(){
         sh 'docker run -d --name processor --net=container:rabbitmq niknestor/processor:$BUILD_NUMBER'
 	sleep 25
         sh 'docker start processor'
-        sleep 25
+        sleep 10
         sh 'docker ps'
     }
-    stage('create bin') {
+    stage('ntergration tests') {
         echo 'Going to create bin'
         def response = httpRequest(
                 httpMode: 'POST',
@@ -64,8 +64,6 @@ node(){
         ).getContent()
 	def binNum = new JsonSlurper().parseText(response).name.toString()
 	buildReport += "Bin ${binNum} created on ${binURL}\n"
-    }
-    stage('integration tests') {
         def messages = [
             'curl http://localhost:8080/message -X POST -d \'{"messageId":1, "timestamp":1234, "protocolVersion":"1.0.0", "messageData":{"mMX":1234, "mPermGen":1234}}\'',
             'curl http://localhost:8080/message -X POST -d \'{"messageId":2, "timestamp":2234, "protocolVersion":"1.0.1", "messageData":{"mMX":1234, "mPermGen":5678, "mOldGen":22222}}\'',
@@ -78,8 +76,6 @@ node(){
                 buildReport += "Test ${i}: ${report}\n"
                 i++
         }
-    }
-    stage('generate report') {
         httpRequest( 
             consoleLogResponseBody: true,
             httpMode: 'POST',
