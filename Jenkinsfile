@@ -51,12 +51,11 @@ node(){
 
     }
     stage('deploy to env') {
-        sh 'docker run -d --name gateway -p 18080:8080 niknestor/gateway:$BUILD_NUMBER'        
-        sh 'docker run -d --name rabbitmq --net=container:gateway rabbitmq'
-        sh 'docker run -d --name processor --net=container:rabbitmq niknestor/processor:$BUILD_NUMBER'
-	sleep 25
-        sh 'docker start processor'
+        sh 'docker run -d --name rabbitmq rabbitmq'
         sleep 10
+        sh 'docker run -d --name processor --link rabbitmq niknestor/processor:$BUILD_NUMBER'        
+        sh 'docker run -d --name gateway --link rabbitmq niknestor/gateway:$BUILD_NUMBER'        
+	sleep 10
         sh 'docker ps'
     }
     stage('ntergration tests') {
