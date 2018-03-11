@@ -43,8 +43,8 @@ node(){
             withMaven(maven: 'maven') {
                 sh 'mvn package -Dmaven.test.skip=true'
             }
-        sh 'sudo docker build -t niknestor/processor:$BUILD_NUMBER -f message-processor/Dockerfile message-processor/'
-        sh 'sudo docker build -t niknestor/gateway:$BUILD_NUMBER -f message-gateway/Dockerfile message-gateway/'
+        sh 'docker build -t niknestor/processor:$BUILD_NUMBER -f message-processor/Dockerfile message-processor/'
+        sh 'docker build -t niknestor/gateway:$BUILD_NUMBER -f message-gateway/Dockerfile message-gateway/'
         }
     }
     stage('save artifact') {
