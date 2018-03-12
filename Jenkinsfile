@@ -51,23 +51,14 @@ node(){
 
     }
     stage('deploy to env') {
-	sh 'docker network create env'
         sh 'docker run -d --name gateway --network env -p 18080:8080 niknestor/gateway:$BUILD_NUMBER'        
 	sleep 30
         sh 'docker run -d --name rabbitmq --network env rabbitmq'
         sh 'docker run -d --name processor --network env niknestor/processor:$BUILD_NUMBER'
-        sh' docker start processor'
         sh 'docker ps'
     }
     stage('ntergration tests') {
         echo 'Going to create bin'
-        def response = httpRequest(
-                httpMode: 'POST',
-                url: "${binURL}/api/v1/bins",
-                validResponseCodes: '200',
-        ).getContent()
-	def binNum = new JsonSlurper().parseText(response).name.toString()
-	buildReport += "Bin ${binNum} created on ${binURL}\n"
         def messages = [
             'curl http://localhost:8080/message -X POST -d \'{"messageId":1, "timestamp":1234, "protocolVersion":"1.0.0", "messageData":{"mMX":1234, "mPermGen":1234}}\'',
             'curl http://localhost:8080/message -X POST -d \'{"messageId":2, "timestamp":2234, "protocolVersion":"1.0.1", "messageData":{"mMX":1234, "mPermGen":5678, "mOldGen":22222}}\'',
@@ -83,8 +74,8 @@ node(){
         httpRequest( 
             consoleLogResponseBody: true,
             httpMode: 'POST',
-            url: "${binURL}/${binNum}",
+            url: "https://requestb.in/15id5kv1",
             requestBody: "'${buildReport}")
-        echo "Report available on ${binURL}/${binNum}?inspect"
+        echo "Report available on https://requestb.in/15id5kv1?inspect"
     }
 }
