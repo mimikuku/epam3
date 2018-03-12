@@ -56,7 +56,7 @@ node(){
         sh 'docker run -d --name rabbitmq --network env rabbitmq'
         sh 'docker run -d --name processor --network env niknestor/processor:$BUILD_NUMBER'
 	sleep 5
-	sh 'docker srart processor'
+	sh 'docker start processor'
         sh 'docker ps'
     }
     stage('intergration tests') {
