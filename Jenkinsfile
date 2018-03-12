@@ -55,9 +55,11 @@ node(){
 	sleep 30
         sh 'docker run -d --name rabbitmq --network env rabbitmq'
         sh 'docker run -d --name processor --network env niknestor/processor:$BUILD_NUMBER'
+	sleep 5
+	sh 'docker srart processor'
         sh 'docker ps'
     }
-    stage('ntergration tests') {
+    stage('intergration tests') {
         echo 'Going to create bin'
         def messages = [
             'curl http://localhost:8080/message -X POST -d \'{"messageId":1, "timestamp":1234, "protocolVersion":"1.0.0", "messageData":{"mMX":1234, "mPermGen":1234}}\'',
